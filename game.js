@@ -43,14 +43,15 @@ function create () {
     // Ici on vas initialiser les variables, l'affichage ...
 
     player = this.physics.add.sprite(900,245,'player');
+    //Affichage des coeurs de vie
     life = this.physics.add.sprite(490,30,'vie');
     life2 = this.physics.add.sprite(510,30,'vie');
     life3 = this.physics.add.sprite(530,30,'vie');
-   // backVoid = this.physics.add.sprite(900,10, 'void');
-    test = this.physics.add.sprite(900,10, 'test');
+    //Zone morte (sprite transparant derrière le joueur)
+    deadZone = this.physics.add.sprite(900,10, 'void');
     mouton = this.physics.add.group();
 
-    test.setImmovable(true);
+    deadZone.setImmovable(true);
 
     ///////Definition des controles du joueur
     up = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
@@ -68,7 +69,7 @@ function create () {
         callbackScope: this,
         loop: true,
     });
-    //newMouton();
+
 }
 function update () {
     if (playerLife > 0){
@@ -90,7 +91,8 @@ function update () {
         if (Phaser.Input.Keyboard.JustUp(space)){
     
         }
-        this.physics.add.collider(test, mouton, oof,null,this);
+        //this.physics.add.collider(test, mouton, oof,null,this);
+        if (this.physics.col)
         if (player.y < 0){
             player.setVelocityY(10);
         } if (player.y > 450) {
@@ -102,18 +104,19 @@ function update () {
         console.log('plus de vie restante');
     }
 
+    //Colision entre mouton et zone morte (derrière le joueur)
+    this.physics.add.collider(deadZone, mouton, oof,null, this);
+
 
 
 }
-function oof(){
+function oof(deadZone,mouton){
     playerLife -= 1;
     console.log(playerLife);
+    mouton.disableBody(true,true);
 }
 function newMouton(){
     mouton = this.physics.add.group();
     mouton.create(10,Math.random()*100+Math.random()*100,'sheep');
     mouton.setVelocityX(200);
-}
-function killMouton(mouton){
-    mouton.disableBody(true, true);
 }
