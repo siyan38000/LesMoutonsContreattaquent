@@ -22,6 +22,7 @@ physics: {
 },
 backgroundColor: '#1ea41c',
 };
+
 // Variables globales
 var game = new Phaser.Game(config);
 var mouton;
@@ -29,19 +30,18 @@ var player;
 var spawnMoutons;
 var playerLife = 3;
 var score = 0;
+var speed;
 
 
 function preload () {
-    // C'est là qu'on vas charger les images et les sons
     this.load.image('player','/LesMoutonsContreattaquent/images/player.png');
     this.load.image('sheep', '/LesMoutonsContreattaquent/images/sheep.png');
     this.load.image('vie', 'images/life.png');
     this.load.image('void', 'images/void.png');
     this.load.image('test', 'images/black.png');
+    this.load.image('attack','images/attack.png');
 }
 function create () {
-    // Ici on vas initialiser les variables, l'affichage ...
-
     player = this.physics.add.sprite(900,245,'player');
     //Affichage des coeurs de vie
     life = this.physics.add.sprite(490,30,'vie');
@@ -50,6 +50,7 @@ function create () {
     //Zone morte (sprite transparant derrière le joueur)
     deadZone = this.physics.add.sprite(900,10, 'void');
     mouton = this.physics.add.group();
+    
 
     deadZone.setImmovable(true);
 
@@ -70,8 +71,50 @@ function create () {
         loop: true,
     });
 
+    //Balles tirées par le joueur
+    var Bullet = new Phaser.Class({
+
+        Extends: Phaser.GameObjects.Image,
+
+        initialize:
+
+        function Bullet (scene)
+        {
+            Phaser.GameObjects.Image.call(this, scene, 0, 0, 'attack');
+
+            this.speed = Phaser.Math.GetSpeed(400, 1);
+        },
+
+        fire: function (x, y)
+        {
+            this.setPosition(x, y - 50);
+
+            this.setActive(true);
+            this.setVisible(true);
+        },
+
+        update: function (time, delta)
+        {
+            this.x -= this.speed * delta;
+
+            if (this.x < -50)
+            {
+                this.setActive(false);
+                this.setVisible(false);
+            }
+        }
+
+    });
+
+    bullets = this.add.group({
+        classType: Bullet,
+        maxSize: 10,
+        runChildUpdate: true
+    });
+    speed = Phaser.Math.GetSpeed(300, 1);
+
 }
-function update () {
+function update (time, delta) {
     if (playerLife > 0){
         if (Phaser.Input.Keyboard.JustDown(up) || Phaser.Input.Keyboard.JustDown(z) ) {
             player.setVelocityY(-100);
@@ -86,11 +129,19 @@ function update () {
             player.setVelocityY(0);
         }
         if (Phaser.Input.Keyboard.JustDown(space)){
-    
+            var bullet = bullets.get();
+            if (bullet)
+        {
+            bullet.fire(player.x, player.y);
+
+            lastFired = time + 50;
         }
-        if (Phaser.Input.Keyboard.JustUp(space)){
-    
         }
+        /*else if (Phaser.Input.Keyboard.JustUp(space)){
+            mousseTouchDown = false;
+
+        }*/
+        
         //this.physics.add.collider(test, mouton, oof,null,this);
         if (this.physics.col)
         if (player.y < 0){
@@ -101,17 +152,32 @@ function update () {
     }
     if (playerLife <= 0){
         this.scene.restart();
-        console.log('plus de vie restante');
+        //TODO : Scene de game-over
     }
+
+    this.physics.add.collider(bullets, mouton, killMouton, null, this);
 
     //Colision entre mouton et zone morte (derrière le joueur)
     this.physics.add.collider(deadZone, mouton, oof,null, this);
+    
 
 
 
 }
 function oof(deadZone,mouton){
     playerLife -= 1;
+
+    //Suppression de l'affichage des vies en fonction du nombre restant
+    switch(playerLife){
+        case 2:
+            life3.disableBody(true,true);
+            break;
+        case 1:
+            life2.disableBody(true,true);
+            break;
+        case 0:
+            life.disableBody(true,true);
+    }
     console.log(playerLife);
     mouton.disableBody(true,true);
 }
@@ -120,3 +186,10 @@ function newMouton(){
     mouton.create(10,Math.random()*100+Math.random()*100,'sheep');
     mouton.setVelocityX(200);
 }
+function killMouton(bullets, mouton){
+    mouton.disableBody(true, true);
+    score += 10;
+    console.log("lol");
+    console.log(score);
+}
+
