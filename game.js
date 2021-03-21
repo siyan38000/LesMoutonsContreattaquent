@@ -31,6 +31,7 @@ var spawnMoutons;
 var playerLife = 3;
 var score = 0;
 var speed;
+var bullet;
 
 
 function preload () {
@@ -40,6 +41,7 @@ function preload () {
     this.load.image('void', 'images/void.png');
     this.load.image('test', 'images/black.png');
     this.load.image('attack','images/attack.png');
+    this.load.image('gameOver', 'images/game-over.jpg');
 }
 function create () {
     player = this.physics.add.sprite(900,245,'player');
@@ -96,7 +98,6 @@ function create () {
         update: function (time, delta)
         {
             this.x -= this.speed * delta;
-
             if (this.x < -50)
             {
                 this.setActive(false);
@@ -111,6 +112,7 @@ function create () {
         maxSize: 10,
         runChildUpdate: true
     });
+
     speed = Phaser.Math.GetSpeed(300, 1);
 
 }
@@ -129,20 +131,16 @@ function update (time, delta) {
             player.setVelocityY(0);
         }
         if (Phaser.Input.Keyboard.JustDown(space)){
-            var bullet = bullets.get();
+            bullet = bullets.get();
             if (bullet)
         {
             bullet.fire(player.x, player.y);
-
+            //this.physics.add.collider(bullet, mouton, killMouton, null, this);
             lastFired = time + 50;
         }
         }
-        /*else if (Phaser.Input.Keyboard.JustUp(space)){
-            mousseTouchDown = false;
 
-        }*/
         
-        //this.physics.add.collider(test, mouton, oof,null,this);
         if (this.physics.col)
         if (player.y < 0){
             player.setVelocityY(10);
@@ -151,11 +149,19 @@ function update (time, delta) {
         }
     }
     if (playerLife <= 0){
-        this.scene.restart();
+        //this.scene.restart();
         //TODO : Scene de game-over
+        player.disableBody(true,true);
+        this.scene.restart();
+
+        this.physics.add.sprite(config.width/2,config.height/2,'gameOver');
+        config.backgroundColor = '#000000';
     }
 
-    this.physics.add.collider(bullets, mouton, killMouton, null, this);
+    
+    //Colision entre les moutons et les balles
+    this.physics.add.collider(mouton, bullets, killMouton, null, this);
+
 
     //Colision entre mouton et zone morte (derrière le joueur)
     this.physics.add.collider(deadZone, mouton, oof,null, this);
@@ -164,6 +170,7 @@ function update (time, delta) {
 
 
 }
+
 function oof(deadZone,mouton){
     playerLife -= 1;
 
@@ -186,7 +193,7 @@ function newMouton(){
     mouton.create(10,Math.random()*100+Math.random()*100,'sheep');
     mouton.setVelocityX(200);
 }
-function killMouton(bullets, mouton){
+function killMouton(bullet, mouton){
     mouton.disableBody(true, true);
     score += 10;
     console.log("lol");
