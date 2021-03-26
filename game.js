@@ -42,6 +42,9 @@ function preload () {
     this.load.image('test', 'images/black.png');
     this.load.image('attack','images/attack.png');
     this.load.image('gameOver', 'images/game-over.jpg');
+    this.load.audio('oof', 'sounds/oof.mp3');
+    this.load.audio('musiccque', 'sounds/music.mp3s');
+    this.load.audio('beh', 'sounds/beh.mp3');
 }
 function create () {
     player = this.physics.add.sprite(900,245,'player');
@@ -53,6 +56,7 @@ function create () {
     deadZone = this.physics.add.sprite(900,10, 'void');
     mouton = this.physics.add.group();
     
+    //this.sound.play('music'); 
 
     deadZone.setImmovable(true);
 
@@ -112,6 +116,7 @@ function create () {
         maxSize: 10,
         runChildUpdate: true
     });
+    this.physics.add.overlap(bullets, mouton, this.killMouton, this.killMouton, this);
 
     speed = Phaser.Math.GetSpeed(300, 1);
 
@@ -149,8 +154,6 @@ function update (time, delta) {
         }
     }
     if (playerLife <= 0){
-        //this.scene.restart();
-        //TODO : Scene de game-over
         player.disableBody(true,true);
         this.scene.restart();
 
@@ -187,6 +190,7 @@ function oof(deadZone,mouton){
     }
     console.log(playerLife);
     mouton.disableBody(true,true);
+    this.sound.play('oof');
 }
 function newMouton(){
     mouton = this.physics.add.group();
@@ -195,8 +199,8 @@ function newMouton(){
 }
 function killMouton(bullet, mouton){
     mouton.disableBody(true, true);
+    bullet.disableBody(true, true);
+    this.sound.play('beh');
     score += 10;
-    console.log("lol");
-    console.log(score);
 }
 
