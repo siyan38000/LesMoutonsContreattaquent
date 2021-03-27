@@ -1,3 +1,7 @@
+/*
+Scene principale du jeu
+
+*/
 class MainScene extends Phaser.Scene {
     constructor() {
       super({ key: 'MainScene' }); 
@@ -7,11 +11,11 @@ class MainScene extends Phaser.Scene {
         this.load.image('sheep', '/LesMoutonsContreattaquent/images/sheep.png');
         this.load.image('vie', 'images/life.png');
         this.load.image('void', 'images/void.png');
-        this.load.image('test', 'images/black.png');
         this.load.image('attack','images/attack.png');
-        
+        this.load.image('panneau','images/ferme.png');
+        this.load.image('sky', 'images/sky.jpg');
         this.load.audio('oof', 'sounds/oof.mp3');
-        this.load.audio('musiccque', 'sounds/music.mp3s');
+        this.load.audio('musiccque', 'sounds/music.mp3');
         this.load.audio('beh', 'sounds/beh.mp3');
     }
      create () {
@@ -22,7 +26,10 @@ class MainScene extends Phaser.Scene {
     this.score = 0;
     this.speed;
     this.bullet;
+    this.sound.play('musiccque');
     this.player = this.physics.add.sprite(900,245,'player');
+    this.physics.add.sprite(600,30, 'panneau');
+    this.physics.add.sprite(500, 0, 'sky');
     //Affichage des coeurs de vie
     this.life = this.physics.add.sprite(490,30,'vie');
     this.life2 = this.physics.add.sprite(510,30,'vie');
@@ -30,8 +37,8 @@ class MainScene extends Phaser.Scene {
     //Zone morte (sprite transparant derrière le joueur)
     this.deadZone = this.physics.add.sprite(900,10, 'void');
     this.mouton = this.physics.add.group();
+    this.balles = this.physics.add.group();
         
-        //this.sound.play('music'); 
     
         this.deadZone.setImmovable(true);
     
@@ -52,39 +59,6 @@ class MainScene extends Phaser.Scene {
             loop: true,
         });
     
-        //Balles tirées par le joueur
-        var Bullet = new Phaser.Class({
-    
-            Extends: Phaser.GameObjects.Image,
-    
-            initialize:
-    
-            function Bullet (scene)
-            {
-                Phaser.GameObjects.Image.call(this, scene, 0, 0, 'attack');
-    
-                this.speed = Phaser.Math.GetSpeed(400, 1);
-            },
-    
-            fire: function (x, y)
-            {
-                this.setPosition(x, y - 50);
-    
-                this.setActive(true);
-                this.setVisible(true);
-            },
-    
-            update: function (time, delta)
-            {
-                this.x -= this.speed * delta;
-                if (this.x < -50)
-                {
-                    this.setActive(false);
-                    this.setVisible(false);
-                }
-            }
-    
-        });
     
         this.bullets = this.add.group({
             classType: Bullet,
@@ -111,30 +85,24 @@ class MainScene extends Phaser.Scene {
                this.player.setVelocityY(0);
             }
             if (Phaser.Input.Keyboard.JustDown(this.space)){
-                this.bullet = this.bullets.get();
-                if (this.bullet)
-            {
-                this.bullet.fire(this.player.x, this.player.y);
-                //this.physics.add.collider(bullet, mouton, killMouton, null, this);
-                this.lastFired = time + 50;
-            }
+            this.fireBullets();
             }
     
             
-            if (this.physics.col)
             if (this.player.y < 0){
                 this.player.setVelocityY(10);
             } if (this.player.y > 450) {
                 this.player.setVelocityY(-10);
             }
         }
+        //Appelle de la scene GameOver lorsque le joueur n'as plus de vies
         if (this.playerLife <= 0){
             this.scene.start('GameOverScene');
         }
     
         
         //Colision entre les moutons et les balles
-        this.physics.add.collider(this.mouton, this.bullet, this.killMouton, null, this);
+        this.physics.add.collider(this.mouton, this.balles, this.killMouton, null, this);
     
     
         //Colision entre mouton et zone morte (derrière le joueur)
@@ -164,8 +132,14 @@ class MainScene extends Phaser.Scene {
     }
      newMouton(){
         this.mouton = this.physics.add.group();
-        this.mouton.create(10,Math.random()*100+Math.random()*100,'sheep');
+        //Limitation de la zone ou apparaise les moutons
+        this.mouton.create(10,Math.random() * (400 - 200) + 200,'sheep'); 
         this.mouton.setVelocityX(200);
+    }
+    fireBullets(){
+        this.balles = this.physics.add.group();
+        this.balles.create(this.player.x, this.player.y, 'attack');
+        this.balles.setVelocityX(-400);
     }
      killMouton(bullet, mouton){
         mouton.disableBody(true, true);
