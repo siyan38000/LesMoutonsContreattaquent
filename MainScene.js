@@ -60,15 +60,6 @@ class MainScene extends Phaser.Scene {
         });
     
     
-        this.bullets = this.add.group({
-            classType: Bullet,
-            maxSize: 10,
-            runChildUpdate: true
-        });
-        this.physics.add.overlap(this.bullets, this.mouton, this.killMouton, this.killMouton, this);
-    
-        this.speed = Phaser.Math.GetSpeed(300, 1);
-    
     }
      update (time, delta) {
         if (this.playerLife > 0){
