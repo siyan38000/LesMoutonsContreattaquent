@@ -18,27 +18,21 @@ class MainScene extends Phaser.Scene {
         this.load.audio('musiccque', 'sounds/music.mp3');
         this.load.audio('beh', 'sounds/beh.mp3');
     }
-     create () {
-    this.mouton;
-    this.player;
-    this.spawnMoutons;
-    this.playerLife = 3;
-    this.score = 0;
-    this.speed;
-    this.bullet;
-    this.sound.play('musiccque');
-    this.player = this.physics.add.sprite(900,245,'player');
-    this.physics.add.sprite(600,30, 'panneau');
-    this.physics.add.sprite(500, 0, 'sky');
-    //Affichage des coeurs de vie
-    this.life = this.physics.add.sprite(490,30,'vie');
-    this.life2 = this.physics.add.sprite(510,30,'vie');
-    this.life3 = this.physics.add.sprite(530,30,'vie');
-    //Zone morte (sprite transparant derrière le joueur)
-    this.deadZone = this.physics.add.sprite(900,10, 'void');
-    this.mouton = this.physics.add.group();
-    this.balles = this.physics.add.group();
-        
+    create () {
+        this.playerLife = 3;
+        this.score = 0;
+        this.sound.play('musiccque', { volume: 0.5, loop: true });
+        this.player = this.physics.add.sprite(900,245,'player');
+        this.physics.add.sprite(500, 0, 'sky');
+        this.physics.add.sprite(600,75, 'panneau');
+        //Affichage des coeurs de vie
+        this.life = this.physics.add.sprite(490,30,'vie');
+        this.life2 = this.physics.add.sprite(510,30,'vie');
+        this.life3 = this.physics.add.sprite(530,30,'vie');
+        //Zone morte (sprite transparant derrière le joueur)
+        this.deadZone = this.physics.add.sprite(900,10, 'void');
+        this.mouton = this.physics.add.group();
+        this.balles = this.physics.add.group();
     
         this.deadZone.setImmovable(true);
     
@@ -50,7 +44,7 @@ class MainScene extends Phaser.Scene {
         this.space = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     
         //Affichage du score
-        this.add.text(10,10,"Score : "+this.score,{ font: "35px Arial", fill: "#19de65" });
+        this.dispScore = this.add.text(10,10,"Score : "+this.score,{ font: "35px Arial", fill: "#000000" });
     
         this.spawnMoutons = this.time.addEvent({
             delay: 3500,
@@ -59,9 +53,8 @@ class MainScene extends Phaser.Scene {
             loop: true,
         });
     
-    
     }
-     update (time, delta) {
+     update () {
         if (this.playerLife > 0){
             if (Phaser.Input.Keyboard.JustDown(this.up) || Phaser.Input.Keyboard.JustDown(this.z) ) {
                 this.player.setVelocityY(-100);
@@ -79,11 +72,9 @@ class MainScene extends Phaser.Scene {
             this.fireBullets();
             }
     
-            
-            if (this.player.y < 0){
+            //Afin que le joueur ne puisse pas aller jusqu'au ciel :
+             if (this.player.y < 135) {
                 this.player.setVelocityY(10);
-            } if (this.player.y > 450) {
-                this.player.setVelocityY(-10);
             }
         }
         //Appelle de la scene GameOver lorsque le joueur n'as plus de vies
@@ -99,7 +90,8 @@ class MainScene extends Phaser.Scene {
         //Colision entre mouton et zone morte (derrière le joueur)
         this.physics.add.collider(this.deadZone, this.mouton, this.oof,null, this);
         
-    
+        //MAJ du score
+        this.dispScore.setText("Score : "+this.score);
     
     
     }
@@ -125,13 +117,50 @@ class MainScene extends Phaser.Scene {
         this.mouton = this.physics.add.group();
         //Limitation de la zone ou apparaise les moutons
         this.mouton.create(10,Math.random() * (400 - 200) + 200,'sheep'); 
-        this.mouton.setVelocityX(200);
+        if (this.score < 150){
+            this.mouton.setVelocityX(200);
+        }
+        else if (this.score < 300){
+            this.mouton.setVelocityX(330);
+        }
+        else if (this.score > 299){
+            this.mouton.setVelocityX(350);
+        }
+        this.increaseDifficulty();
     }
     fireBullets(){
-        this.balles = this.physics.add.group();
-        this.balles.create(this.player.x, this.player.y, 'attack');
-        this.balles.setVelocityX(-400);
+        if (this.canFire){
+            this.balles = this.physics.add.group();
+            this.balles.create(this.player.x, this.player.y, 'attack');
+            this.balles.setVelocityX(-1000);
+        }
+        //Espacement des coups de feux d'au moins une secondes
+        //afin d'éviter de spammer la barre espace
+        this.canFire = false;
+        this.time.addEvent({
+            delay: 1000,
+            callback: this.resetCanFire,
+            callbackScope: this,
+            loop: false,
+        });
     }
+    resetCanFire(){
+        this.canFire = true;
+    }
+
+    //Augmentation de difficulté en fonction du score
+    increaseDifficulty(){
+        if (this.score > 50){
+            this.spawnMoutons.delay = 2000;
+        }
+        else if (this.score > 100){
+            this.spawnMoutons.delay = 1000;
+        }
+        else if (this.score > 300){
+            this.spawnMoutons.delay = 750;
+        }
+    }
+
      killMouton(bullet, mouton){
         mouton.disableBody(true, true);
         bullet.disableBody(true, true);
